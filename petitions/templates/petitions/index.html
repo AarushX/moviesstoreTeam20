@@ -47,23 +47,38 @@
                   Submitted by {{ petition.created_by.username }} on {{ petition.created_at|date:"M d, Y" }}
                 </h6>
                 <p class="card-text">
-                  <i class="fas fa-thumbs-up"></i> {{ petition.vote_count }} vote{{ petition.vote_count|pluralize }}
+                  <i class="fas fa-thumbs-up text-success"></i> {{ petition.vote_count }} 
+                  <i class="fas fa-thumbs-down text-danger ms-3"></i> {{ petition.dislike_count }}
                 </p>
               </div>
               <div>
                 {% if user.is_authenticated %}
-                <form method="POST" action="{% url 'petitions.vote' id=petition.id %}">
-                  {% csrf_token %}
-                  {% if user in petition.voters.all %}
-                  <button type="submit" class="btn btn-success">
-                    <i class="fas fa-check"></i> Voted
-                  </button>
-                  {% else %}
-                  <button type="submit" class="btn btn-outline-success">
-                    <i class="fas fa-thumbs-up"></i> Vote
-                  </button>
-                  {% endif %}
-                </form>
+                <div class="d-flex gap-2">
+                  <form method="POST" action="{% url 'petitions.vote' id=petition.id %}">
+                    {% csrf_token %}
+                    {% if user in petition.voters.all %}
+                    <button type="submit" class="btn btn-success">
+                      <i class="fas fa-check"></i> Liked
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-outline-success">
+                      <i class="fas fa-thumbs-up"></i> Like
+                    </button>
+                    {% endif %}
+                  </form>
+                  <form method="POST" action="{% url 'petitions.dislike' id=petition.id %}">
+                    {% csrf_token %}
+                    {% if user in petition.dislikers.all %}
+                    <button type="submit" class="btn btn-danger">
+                      <i class="fas fa-times"></i> Disliked
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-outline-danger">
+                      <i class="fas fa-thumbs-down"></i> Dislike
+                    </button>
+                    {% endif %}
+                  </form>
+                </div>
                 {% endif %}
               </div>
             </div>

@@ -26,11 +26,32 @@ def create(request):
 def vote(request, id):
     petition = get_object_or_404(Petition, id=id)
     
+     # Remove dislike if user previously disliked
+    if request.user in petition.dislikers.all():
+        petition.dislikers.remove(request.user)
+
     if request.user in petition.voters.all():
         # User already voted, remove their vote
         petition.voters.remove(request.user)
     else:
         # User hasn't voted, add their vote
         petition.voters.add(request.user)
+    
+    return redirect('petitions.index')
+
+@login_required
+def dislike(request, id):
+    petition = get_object_or_404(Petition, id=id)
+    
+    # Remove vote if user previously voted
+    if request.user in petition.voters.all():
+        petition.voters.remove(request.user)
+    
+    if request.user in petition.dislikers.all():
+        # User already disliked, remove their dislike
+        petition.dislikers.remove(request.user)
+    else:
+        # User hasn't disliked, add their dislike
+        petition.dislikers.add(request.user)
     
     return redirect('petitions.index')

@@ -7,9 +7,13 @@ class Petition(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='petitions_created')
     created_at = models.DateTimeField(auto_now_add=True)
     voters = models.ManyToManyField(User, related_name='petitions_voted', blank=True)
-    
+    dislikers = models.ManyToManyField(User, related_name='petitions_disliked', blank=True)
+
     def vote_count(self):
         return self.voters.count()
+    
+    def dislike_count(self):
+        return self.dislikers.count()
     
     def __str__(self):
         return str(self.id) + ' - ' + self.movie_name
