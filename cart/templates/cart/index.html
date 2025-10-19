@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 {% block content %}
 {% load static %}
@@ -27,27 +26,42 @@
             <td>{{ movie.id }}</td>
             <td>{{ movie.name }}</td>
             <td>${{ movie.price }}</td>
-            <td>{{request.session.cart|get_quantity:movie.id }}
-            </td>
+            <td>{{request.session.cart|get_quantity:movie.id }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    <div class="row">
-      <div class="text-end">
-        <a class="btn btn-outline-secondary mb-2"><b>Total to pay:</b> ${{ template_data.cart_total }}</a>
-        {% if template_data.movies_in_cart|length > 0 %}
-        <a href="{% url 'cart.purchase' %}" class="btn bg-dark text-white mb-2">Purchase
-        </a>
-        <a href="{% url 'cart.clear' %}">
-          <button class="btn btn-danger mb-2">
-            Remove all movies from Cart
-          </button>
-        </a>
-        {% endif %}
+
+    <!-- Checkout Form -->
+    {% if template_data.movies_in_cart|length > 0 %}
+    <div class="row mt-3">
+      <div class="col-md-6 mx-auto">
+        <form method="POST" action="{% url 'cart.purchase' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="city" class="form-label">City:</label>
+            <input type="text" name="city" id="city" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="state" class="form-label">State:</label>
+            <input type="text" name="state" id="state" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="country" class="form-label">Country:</label>
+            <input type="text" name="country" id="country" class="form-control" value="USA">
+          </div>
+          <div class="d-flex justify-content-between">
+            <a href="{% url 'cart.clear' %}" class="btn btn-danger">Remove all movies from Cart</a>
+            <button type="submit" class="btn bg-dark text-white">
+              Purchase - ${{ template_data.cart_total }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
+    {% endif %}
+
   </div>
 </div>
 {% endblock content %}

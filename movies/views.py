@@ -1,6 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Movie, Review
+from django.db.models import Count
+from cart.models import Order, Item 
 from django.contrib.auth.decorators import login_required
+import json
+
 # Defining the movie function
 def index(request):
     search_term = request.GET.get('search')
@@ -64,4 +68,25 @@ def delete_review(request, id, review_id):
     return redirect('movies.show', id=id)
 
 def rating_map(request):
-    return render(request, 'movies/rating_map.html')
+    # Aggregate purchases per movie per city
+    movie_counts = list(
+        Item.objects
+        .values(
+            'movie__id',
+            'movie__name',
+            'order__city',
+            'order__latitude',
+            'order__longitude'
+        )
+        .annotate(count=Count('id'))
+    )
+
+    # Convert Python list of dicts to JSON string for safe embedding
+    movie_counts_json = json.dumps(movie_counts, ensure_ascii=False)
+
+    return render(
+        request,
+        'movies/rating_map.html',
+        {'movie_counts_json': movie_counts_json}
+    )
+

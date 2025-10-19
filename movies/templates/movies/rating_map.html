@@ -1,10 +1,41 @@
 {% extends 'base.html' %}
 
-{% block title %}Movie Rating Map{% endblock %}
+{% block title %}Movie Popularity Map{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center">Movie Rating Map</h1>
-    <p class="text-center">This page will display movie ratings in a map format.</p>
+    <h1 class="text-center">Movie Popularity Map</h1>
+    <p class="text-center">Each marker represents a city where movies have been purchased.</p>
+
+    <!-- Map container -->
+    <div id="map" style="height: 600px; width: 100%;"></div>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Create the map
+        var map = L.map('map').setView([33.7490, -84.3880], 10); // Center on USA
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Parse movie purchase data from Django
+        var movieCounts = JSON.parse('{{ movie_counts_json|escapejs }}');
+
+        // Add markers for each city/movie
+        movieCounts.forEach(function(mc) {
+            if(mc.order__latitude && mc.order__longitude) {
+                L.marker([mc.order__latitude, mc.order__longitude])
+                 .addTo(map)
+                 .bindPopup(mc.movie__name + ' (' + mc.count + ' purchases in ' + mc.order__city + ')');
+            }
+        });
+    });
+    </script>
 </div>
 {% endblock %}

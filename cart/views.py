@@ -34,26 +34,47 @@ def clear(request):
 
 @login_required
 def purchase(request):
-    cart = request.session.get('cart', {})
-    movie_ids = list(cart.keys())
-    if (movie_ids == []):
-        return redirect('cart.index')
-    movies_in_cart = Movie.objects.filter(id__in=movie_ids)
-    cart_total = calculate_cart_total(cart, movies_in_cart)
-    order = Order()
-    order.user = request.user
-    order.total = cart_total
-    order.save()
-    for movie in movies_in_cart:
-        item = Item()
-        item.movie = movie
-        item.price = movie.price
-        item.order = order
-        item.quantity = cart[str(movie.id)]
-        item.save()
-    request.session['cart'] = {}
-    template_data = {}
-    template_data['title'] = 'Purchase confirmation'
-    template_data['order_id'] = order.id
-    return render(request, 'cart/purchase.html',
-        {'template_data': template_data})
+    if request.method == 'POST':
+        cart = request.session.get('cart', {})
+        movie_ids = list(cart.keys())
+        if not movie_ids:
+            return redirect('cart.index')
+
+        # Get location info from form
+        city = request.POST.get('city')
+        state = request.POST.get('state')
+        country = request.POST.get('country', 'USA')
+
+        movies_in_cart = Movie.objects.filter(id__in=movie_ids)
+        cart_total = calculate_cart_total(cart, movies_in_cart)
+
+        # Create Order with location info
+        order = Order(
+            user=request.user,
+            total=cart_total,
+            city=city,
+            state=state,
+            country=country
+        )
+        order.save()  # save() will trigger automatic latitude/longitude
+
+        # Create Item objects
+        for movie in movies_in_cart:
+            Item.objects.create(
+                movie=movie,
+                price=movie.price,
+                order=order,
+                quantity=cart[str(movie.id)]
+            )
+
+        # Clear cart
+        request.session['cart'] = {}
+
+        template_data = {
+            'title': 'Purchase confirmation',
+            'order_id': order.id
+        }
+        return render(request, 'cart/purchase.html', {'template_data': template_data})
+
+    # If GET request, redirect to cart page
+    return redirect('cart.index')
