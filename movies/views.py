@@ -62,3 +62,6 @@ def delete_review(request, id, review_id):
         user=request.user)
     review.delete()
     return redirect('movies.show', id=id)
+
+def rating_map(request):
+    return render(request, 'movies/rating_map.html')
