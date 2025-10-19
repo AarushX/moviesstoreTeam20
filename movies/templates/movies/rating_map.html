@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container mt-4">
     <h1 class="text-center">Movie Popularity Map</h1>
-    <p class="text-center">Each marker represents a city where movies have been purchased.</p>
+    <p class="text-center">Each marker shows the most purchased movie in that city (by quantity).</p>
 
     <!-- Map container -->
     <div id="map" style="height: 600px; width: 100%;"></div>
@@ -16,23 +16,26 @@
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Create the map
-        var map = L.map('map').setView([33.7490, -84.3880], 10); // Center on USA
+        // Initialize map centered on Atlanta
+        var map = L.map('map').setView([33.7490, -84.3880], 6);
 
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // Parse movie purchase data from Django
+        // Parse Django JSON safely
         var movieCounts = JSON.parse('{{ movie_counts_json|escapejs }}');
 
-        // Add markers for each city/movie
+        // Create a LayerGroup for markers
+        var markerGroup = L.layerGroup().addTo(map);
+
+        // Add a marker per city
         movieCounts.forEach(function(mc) {
-            if(mc.order__latitude && mc.order__longitude) {
-                L.marker([mc.order__latitude, mc.order__longitude])
-                 .addTo(map)
-                 .bindPopup(mc.movie__name + ' (' + mc.count + ' purchases in ' + mc.order__city + ')');
+            if(mc.latitude && mc.longitude) {
+                L.marker([mc.latitude, mc.longitude])
+                 .bindPopup(mc.movie_name + ' (' + mc.total_quantity + ' units purchased in ' + mc.city + ')')
+                 .addTo(markerGroup);
             }
         });
     });

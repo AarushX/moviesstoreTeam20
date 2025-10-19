@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Movie, Review
-from django.db.models import Count
+from django.db.models import Sum
 from cart.models import Order, Item 
 from django.contrib.auth.decorators import login_required
 import json
@@ -67,26 +67,31 @@ def delete_review(request, id, review_id):
     review.delete()
     return redirect('movies.show', id=id)
 
+
 def rating_map(request):
-    # Aggregate purchases per movie per city
-    movie_counts = list(
+    # Aggregate purchases by city and movie using total quantity
+    purchases = (
         Item.objects
-        .values(
-            'movie__id',
-            'movie__name',
-            'order__city',
-            'order__latitude',
-            'order__longitude'
-        )
-        .annotate(count=Count('id'))
+        .values('order__city', 'order__latitude', 'order__longitude', 'movie__name')
+        .annotate(total_quantity=Sum('quantity'))
     )
 
-    # Convert Python list of dicts to JSON string for safe embedding
-    movie_counts_json = json.dumps(movie_counts, ensure_ascii=False)
+    # Keep only the most purchased movie per city
+    city_popular = {}
+    for p in purchases:
+        city_key = (p['order__latitude'], p['order__longitude'], p['order__city'])
+        if city_key not in city_popular or p['total_quantity'] > city_popular[city_key]['total_quantity']:
+            city_popular[city_key] = {
+                'movie_name': p['movie__name'],
+                'total_quantity': p['total_quantity'],
+                'latitude': p['order__latitude'],
+                'longitude': p['order__longitude'],
+                'city': p['order__city']
+            }
 
-    return render(
-        request,
-        'movies/rating_map.html',
-        {'movie_counts_json': movie_counts_json}
-    )
+    # Only include entries with valid coordinates
+    city_popular_list = [c for c in city_popular.values() if c['latitude'] and c['longitude']]
+    city_popular_json = json.dumps(city_popular_list, ensure_ascii=False)
+
+    return render(request, 'movies/rating_map.html', {'movie_counts_json': city_popular_json})
 
