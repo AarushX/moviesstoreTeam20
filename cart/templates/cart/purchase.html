@@ -1,16 +1,175 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="p-3">
-  <div class="container">
-    <div class="row mt-3">
-      <div class="col mx-auto mb-3">
-        <h2>Purchase Completed</h2>
-        <hr />
-        <p>Congratulations, purchase completed. Order
-          number is: <b>#{{ template_data.order_id }}</b>
-        </p>
+
+<style>
+  .confirmation-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .confirmation-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 48px;
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 40px;
+  }
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    background: #d4edda;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+  }
+  .success-icon i {
+    font-size: 2.5rem;
+    color: #28a745;
+  }
+  .confirmation-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2E2E2E;
+    margin-bottom: 12px;
+  }
+  .confirmation-subtitle {
+    color: #7F7F7F;
+    font-size: 1.1rem;
+    margin-bottom: 32px;
+  }
+  .order-number-box {
+    background: #f8f9fa;
+    border: 2px dashed #6ab43e;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .order-number-label {
+    color: #7F7F7F;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .order-number-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #6ab43e;
+    font-family: 'Courier New', monospace;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-primary-action {
+    background: #6ab43e;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.3s;
+  }
+  .btn-primary-action:hover {
+    background: #5a9c35;
+    color: white;
+  }
+  .btn-secondary-action {
+    background: transparent;
+    color: #2E2E2E;
+    border: 2px solid #2E2E2E;
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s;
+  }
+  .btn-secondary-action:hover {
+    background: #2E2E2E;
+    color: white;
+  }
+  .info-section {
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid #e0e0e0;
+  }
+  .info-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7F7F7F;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+  .info-item i {
+    margin-right: 8px;
+    color: #6ab43e;
+  }
+</style>
+
+<div class="p-4" style="background: #f5f5f5; min-height: calc(100vh - 400px);">
+  <div class="confirmation-container">
+    
+    <div class="confirmation-card">
+      
+      <!-- Success Icon -->
+      <div class="success-icon">
+        <i class="fas fa-check"></i>
       </div>
+
+      <!-- Title -->
+      <h1 class="confirmation-title">Order Confirmed!</h1>
+      <p class="confirmation-subtitle">
+        Thank you for your purchase. Your order has been successfully placed.
+      </p>
+
+      <!-- Order Number -->
+      <div class="order-number-box">
+        <div class="order-number-label">Order Number</div>
+        <div class="order-number-value">#{{ template_data.order_id }}</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <a href="{% url 'accounts.orders' %}" class="btn-primary-action">
+          <i class="fas fa-list me-2"></i>View My Orders
+        </a>
+        <a href="{% url 'movies.index' %}" class="btn-secondary-action">
+          <i class="fas fa-film me-2"></i>Continue Shopping
+        </a>
+      </div>
+
+      <!-- Additional Info -->
+      <div class="info-section">
+        <div class="info-item">
+          <i class="fas fa-envelope"></i>
+          <span>A confirmation email has been sent to your registered email address.</span>
+        </div>
+        <div class="info-item">
+          <i class="fas fa-truck"></i>
+          <span>Your digital movies will be available in your library immediately.</span>
+        </div>
+        <div class="info-item">
+          <i class="fas fa-headset"></i>
+          <span>Need help? Contact our support team anytime.</span>
+        </div>
+      </div>
+
     </div>
+
   </div>
 </div>
+
 {% endblock content %}

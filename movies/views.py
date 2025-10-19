@@ -75,18 +75,73 @@ def rating_map(request):
             'movie__id',
             'movie__name',
             'order__city',
+            'order__state',
+            'order__country',
             'order__latitude',
             'order__longitude'
         )
         .annotate(count=Count('id'))
     )
-
-    # Convert Python list of dicts to JSON string for safe embedding
-    movie_counts_json = json.dumps(movie_counts, ensure_ascii=False)
+    
+    # Group by location to combine multiple movies at same location
+    locations = {}
+    movies_summary = {}  # Track all movies and their total purchases
+    
+    for item in movie_counts:
+        if item['order__latitude'] and item['order__longitude']:
+            # Create a location key
+            loc_key = f"{item['order__latitude']},{item['order__longitude']}"
+            
+            if loc_key not in locations:
+                locations[loc_key] = {
+                    'latitude': item['order__latitude'],
+                    'longitude': item['order__longitude'],
+                    'city': item['order__city'],
+                    'state': item['order__state'],
+                    'country': item['order__country'],
+                    'movies': [],
+                    'total_purchases': 0
+                }
+            
+            locations[loc_key]['movies'].append({
+                'id': item['movie__id'],
+                'name': item['movie__name'],
+                'count': item['count']
+            })
+            locations[loc_key]['total_purchases'] += item['count']
+            
+            # Track movie summary
+            movie_id = item['movie__id']
+            if movie_id not in movies_summary:
+                movies_summary[movie_id] = {
+                    'id': movie_id,
+                    'name': item['movie__name'],
+                    'total_purchases': 0,
+                    'locations': []
+                }
+            movies_summary[movie_id]['total_purchases'] += item['count']
+            movies_summary[movie_id]['locations'].append({
+                'city': item['order__city'],
+                'state': item['order__state'],
+                'country': item['order__country'],
+                'latitude': item['order__latitude'],
+                'longitude': item['order__longitude'],
+                'count': item['count']
+            })
+    
+    # Convert to lists for JSON serialization
+    locations_list = list(locations.values())
+    movies_list = sorted(movies_summary.values(), key=lambda x: x['total_purchases'], reverse=True)
+    
+    locations_json = json.dumps(locations_list, ensure_ascii=False)
+    movies_json = json.dumps(movies_list, ensure_ascii=False)
 
     return render(
         request,
         'movies/rating_map.html',
-        {'movie_counts_json': movie_counts_json}
+        {
+            'locations_json': locations_json,
+            'movies_json': movies_json
+        }
     )
 

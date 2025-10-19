@@ -3,39 +3,514 @@
 {% block title %}Movie Popularity Map{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="text-center">Movie Popularity Map</h1>
-    <p class="text-center">Each marker represents a city where movies have been purchased.</p>
 
-    <!-- Map container -->
-    <div id="map" style="height: 600px; width: 100%;"></div>
+<style>
+    .map-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+    }
+    
+    .map-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .map-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2E2E2E;
+        margin-bottom: 10px;
+    }
+    
+    .map-header p {
+        color: #7F7F7F;
+        font-size: 1.1rem;
+    }
+    
+    .map-layout {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+    
+    .movies-sidebar {
+        width: 320px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow: hidden;
+        flex-shrink: 0;
+        max-height: 700px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .sidebar-header {
+        background: linear-gradient(135deg, #6ab43e 0%, #5a9c35 100%);
+        color: white;
+        padding: 20px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-search {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .sidebar-search input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .sidebar-search input:focus {
+        outline: none;
+        border-color: #6ab43e;
+    }
+    
+    .movies-list {
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .movie-item-sidebar {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .movie-item-sidebar:hover {
+        background: #f8f9fa;
+    }
+    
+    .movie-item-sidebar.active {
+        background: #e8f5e0;
+        border-left: 4px solid #6ab43e;
+    }
+    
+    .movie-item-sidebar .movie-title {
+        font-weight: 600;
+        color: #2E2E2E;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .movie-item-sidebar .movie-title i {
+        margin-right: 8px;
+        color: #6ab43e;
+    }
+    
+    .movie-item-sidebar .movie-stats {
+        font-size: 0.85rem;
+        color: #7F7F7F;
+    }
+    
+    .movie-item-sidebar .purchase-count {
+        color: #6ab43e;
+        font-weight: 600;
+    }
+    
+    .map-wrapper {
+        flex: 1;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow: hidden;
+        min-width: 0;
+    }
+    
+    #map {
+        height: 700px;
+        width: 100%;
+        z-index: 1;
+    }
+    
+    .no-movies {
+        padding: 40px 20px;
+        text-align: center;
+        color: #7F7F7F;
+    }
+    
+    /* Custom Popup Styling */
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    .leaflet-popup-content {
+        margin: 0;
+        min-width: 280px;
+    }
+    
+    .popup-header {
+        background: linear-gradient(135deg, #6ab43e 0%, #5a9c35 100%);
+        color: white;
+        padding: 16px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .popup-location {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 4px;
+    }
+    
+    .popup-body {
+        padding: 16px;
+    }
+    
+    .movie-item {
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+        transition: background 0.2s;
+    }
+    
+    .movie-item:last-child {
+        border-bottom: none;
+    }
+    
+    .movie-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .movie-name {
+        font-weight: 600;
+        color: #2E2E2E;
+        margin-bottom: 4px;
+    }
+    
+    .movie-count {
+        color: #6ab43e;
+        font-size: 0.9rem;
+    }
+    
+    .popup-footer {
+        background: #f8f9fa;
+        padding: 12px 16px;
+        border-top: 1px solid #e0e0e0;
+        text-align: center;
+        font-weight: 600;
+        color: #2E2E2E;
+    }
+    
+    /* Custom Marker */
+    .custom-marker {
+        background: #6ab43e;
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer;
+    }
+    
+    .custom-marker:hover {
+        transform: scale(1.1);
+        background: #5a9c35;
+    }
+</style>
 
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Create the map
-        var map = L.map('map').setView([33.7490, -84.3880], 10); // Center on USA
+<div class="map-container">
+    <div class="map-header">
+        <h1><i class="fas fa-map-marked-alt me-2"></i>Movie Popularity Map</h1>
+        <p>Interactive map showing where movies have been purchased worldwide</p>
+    </div>
 
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+    <div class="map-layout">
+        <!-- Movies Sidebar -->
+        <div class="movies-sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-film me-2"></i>Movies
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="movie-search" placeholder="Search movies...">
+            </div>
+            <div class="movies-list" id="movies-list">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </div>
 
-        // Parse movie purchase data from Django
-        var movieCounts = JSON.parse('{{ movie_counts_json|escapejs }}');
+        <!-- Map -->
+        <div class="map-wrapper">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
 
-        // Add markers for each city/movie
-        movieCounts.forEach(function(mc) {
-            if(mc.order__latitude && mc.order__longitude) {
-                L.marker([mc.order__latitude, mc.order__longitude])
-                 .addTo(map)
-                 .bindPopup(mc.movie__name + ' (' + mc.count + ' purchases in ' + mc.order__city + ')');
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Parse data from Django
+    var locations = JSON.parse('{{ locations_json|escapejs }}');
+    var movies = JSON.parse('{{ movies_json|escapejs }}');
+    
+    var allMarkers = [];
+    var movieMarkers = {}; // Track markers by movie ID
+    var activeMovieId = null;
+    
+    // Create the map with better initial view
+    var map = L.map('map', {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        dragging: true
+    });
+    
+    // Add CartoDB Positron tiles (cleaner, more modern look)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Create marker cluster group for better performance and visualization
+    var markers = L.markerClusterGroup({
+        maxClusterRadius: 80,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: function(cluster) {
+            var childCount = cluster.getChildCount();
+            var c = ' marker-cluster-';
+            if (childCount < 10) {
+                c += 'small';
+            } else if (childCount < 50) {
+                c += 'medium';
+            } else {
+                c += 'large';
+            }
+            return new L.DivIcon({ 
+                html: '<div><span>' + childCount + '</span></div>', 
+                className: 'marker-cluster' + c, 
+                iconSize: new L.Point(40, 40) 
+            });
+        }
+    });
+    
+    // Create bounds for auto-zoom
+    var bounds = L.latLngBounds();
+    
+    // Add markers for each location
+    locations.forEach(function(location) {
+        var lat = location.latitude;
+        var lon = location.longitude;
+        
+        // Add to bounds
+        bounds.extend([lat, lon]);
+        
+        // Create custom marker icon
+        var customIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: '<div class="custom-marker">' + location.movies.length + '</div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
+        });
+        
+        // Build popup content
+        var popupContent = '<div class="popup-header">' +
+            '<div>' + location.city + '</div>' +
+            '<div class="popup-location">' + 
+            (location.state ? location.state + ', ' : '') + 
+            location.country + '</div>' +
+            '</div>' +
+            '<div class="popup-body">';
+        
+        location.movies.forEach(function(movie) {
+            popupContent += '<div class="movie-item">' +
+                '<div class="movie-name"><i class="fas fa-film me-1"></i>' + movie.name + '</div>' +
+                '<div class="movie-count">' + movie.count + ' purchase' + 
+                (movie.count > 1 ? 's' : '') + '</div>' +
+                '</div>';
+        });
+        
+        popupContent += '</div>' +
+            '<div class="popup-footer">' +
+            'Total: ' + location.total_purchases + ' purchase' + 
+            (location.total_purchases > 1 ? 's' : '') +
+            '</div>';
+        
+        // Create marker with popup
+        var marker = L.marker([lat, lon], { icon: customIcon })
+            .bindPopup(popupContent, {
+                maxWidth: 350,
+                className: 'custom-popup'
+            });
+        
+        // Track markers by movie ID
+        location.movies.forEach(function(movie) {
+            if (!movieMarkers[movie.id]) {
+                movieMarkers[movie.id] = [];
+            }
+            movieMarkers[movie.id].push({
+                marker: marker,
+                location: location
+            });
+        });
+        
+        allMarkers.push(marker);
+        markers.addLayer(marker);
+    });
+    
+    // Add marker cluster to map
+    map.addLayer(markers);
+    
+    // Fit map to bounds with padding
+    if (bounds.isValid()) {
+        map.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 12
+        });
+    } else {
+        // Default view if no locations (USA centered)
+        map.setView([39.8283, -98.5795], 4);
+    }
+    
+    // Add scale control
+    L.control.scale({
+        imperial: true,
+        metric: true
+    }).addTo(map);
+    
+    // Add home button to reset view
+    var homeButton = L.control({position: 'topleft'});
+    homeButton.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        div.innerHTML = '<a href="#" title="Reset View" style="width: 30px; height: 30px; line-height: 30px; text-align: center; text-decoration: none; color: #333;"><i class="fas fa-home"></i></a>';
+        div.onclick = function(e) {
+            e.preventDefault();
+            resetView();
+        };
+        return div;
+    };
+    homeButton.addTo(map);
+    
+    // Function to reset view
+    function resetView() {
+        activeMovieId = null;
+        document.querySelectorAll('.movie-item-sidebar').forEach(function(el) {
+            el.classList.remove('active');
+        });
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, {
+                padding: [50, 50],
+                maxZoom: 12
+            });
+        }
+    }
+    
+    // Populate movies sidebar
+    function populateMoviesSidebar(moviesToShow) {
+        var moviesList = document.getElementById('movies-list');
+        moviesList.innerHTML = '';
+        
+        if (moviesToShow.length === 0) {
+            moviesList.innerHTML = '<div class="no-movies"><i class="fas fa-film" style="font-size: 2rem; margin-bottom: 10px;"></i><br>No movies found</div>';
+            return;
+        }
+        
+        moviesToShow.forEach(function(movie) {
+            var movieDiv = document.createElement('div');
+            movieDiv.className = 'movie-item-sidebar';
+            movieDiv.dataset.movieId = movie.id;
+            
+            var locationsCount = movie.locations.length;
+            var locationsText = locationsCount === 1 ? '1 location' : locationsCount + ' locations';
+            
+            movieDiv.innerHTML = '<div class="movie-title">' +
+                '<i class="fas fa-film"></i>' + movie.name +
+                '</div>' +
+                '<div class="movie-stats">' +
+                '<span class="purchase-count">' + movie.total_purchases + ' purchases</span> • ' +
+                locationsText +
+                '</div>';
+            
+            movieDiv.onclick = function() {
+                showMovieOnMap(movie.id);
+            };
+            
+            moviesList.appendChild(movieDiv);
+        });
+    }
+    
+    // Show movie locations on map
+    function showMovieOnMap(movieId) {
+        activeMovieId = movieId;
+        
+        // Update sidebar active state
+        document.querySelectorAll('.movie-item-sidebar').forEach(function(el) {
+            if (el.dataset.movieId == movieId) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
             }
         });
+        
+        // Get markers for this movie
+        var movieMarkerData = movieMarkers[movieId];
+        
+        if (movieMarkerData && movieMarkerData.length > 0) {
+            // Create bounds for this movie's locations
+            var movieBounds = L.latLngBounds();
+            
+            movieMarkerData.forEach(function(data) {
+                var marker = data.marker;
+                var location = data.location;
+                movieBounds.extend([location.latitude, location.longitude]);
+                
+                // Open popup for first location
+                if (movieMarkerData.indexOf(data) === 0) {
+                    marker.openPopup();
+                }
+            });
+            
+            // Fit map to movie locations
+            map.fitBounds(movieBounds, {
+                padding: [80, 80],
+                maxZoom: 12
+            });
+        }
+    }
+    
+    // Initial population
+    populateMoviesSidebar(movies);
+    
+    // Search functionality
+    var searchInput = document.getElementById('movie-search');
+    searchInput.addEventListener('input', function() {
+        var searchTerm = this.value.toLowerCase().trim();
+        
+        if (searchTerm === '') {
+            populateMoviesSidebar(movies);
+        } else {
+            var filteredMovies = movies.filter(function(movie) {
+                return movie.name.toLowerCase().includes(searchTerm);
+            });
+            populateMoviesSidebar(filteredMovies);
+        }
     });
-    </script>
-</div>
+});
+</script>
+
 {% endblock %}

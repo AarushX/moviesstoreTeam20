@@ -1,8 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from movies.models import Movie
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
+from .geocoding import geocode_address
 
 class Order(models.Model):
     id = models.AutoField(primary_key=True)
@@ -22,15 +21,9 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         # Only try geocoding if lat/lon not already set and city exists
         if (not self.latitude or not self.longitude) and self.city:
-            full_address = ", ".join(filter(None, [self.city, self.state, self.country]))
-            try:
-                geolocator = Nominatim(user_agent="movie_map_app")
-                location = geolocator.geocode(full_address)
-                if location is not None:
-                    self.latitude = location.latitude
-                    self.longitude = location.longitude
-            except GeocoderTimedOut:
-                pass
+            coordinates = geocode_address(self.city, self.state, self.country)
+            if coordinates:
+                self.latitude, self.longitude = coordinates
 
         super().save(*args, **kwargs)
 
